@@ -7,5 +7,4 @@ int main() {
   server.avoid_ports_collision();
   server.sock_listen(3000);
   server.new_connection();
-
 }

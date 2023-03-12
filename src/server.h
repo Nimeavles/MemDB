@@ -14,8 +14,10 @@ class Server {
     private:
         int _socket_fd;
         int opt = 1;
-        struct sockaddr_in address;
+        struct sockaddr_in server_address;
+        struct sockaddr_in client_address;
         void bind_port(int port);
         int _actual_socket;
-        int addrlen = sizeof(address);
+        int addrlen = sizeof(sockaddr);
+        char _buffer[1024] = { 0 };
 };

@@ -1,12 +1,12 @@
 #include <sys/socket.h> // socket()
 #include <cstdio> // perror()
 #include <unistd.h> // exit()
+#include <cstring>
 #include "server.h"
-
-
 
 using namespace std;
 
+char *message = "Hello World\n";
 
 /*
   --CREATE SOCKET STEP--
@@ -22,17 +22,17 @@ using namespace std;
 
 void Server::create_socket() {
   this->_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (this->_socket_fd <= 0) {
-    perror("Could not create socket");
+  if (this->_socket_fd < 0) {
+    perror("Could not create the socket");
     exit(1);
   }
 }
 
 void Server::avoid_ports_collision() {
-  if (setsockopt(this->_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &this->opt,sizeof(this->opt))) {
-    perror("The port is taken by another program");
-    exit(1);
-  }
+	if (setsockopt(this->_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &this->opt,sizeof(this->opt))) {
+		perror("The port is taken by another program");
+		exit(1);
+	}
 }
 
 /*
@@ -44,14 +44,15 @@ void Server::avoid_ports_collision() {
 */
 
 void Server::bind_port(int port) {
-  this->address.sin_family = AF_INET;
-  this->address.sin_addr.s_addr = INADDR_ANY;
-  this->address.sin_port = htons(port);
+	this->server_address.sin_family = AF_INET;
+	this->server_address.sin_addr.s_addr = INADDR_ANY;
+	this->server_address.sin_port = htons(port);
+    bzero(&(this->server_address.sin_zero), 8);
 
-  if (bind(this->_socket_fd, (struct sockaddr*)&this->address, sizeof(this->address)) < 0) {
-    perror("Could not bind the socket to the port");
-    exit(1);
-  }
+	if (bind(this->_socket_fd, (struct sockaddr*)&this->server_address, this->addrlen) == -1) {
+		perror("Could not bind the socket to the port");
+		exit(1);
+	}
 }
 
 /*
@@ -61,28 +62,41 @@ void Server::bind_port(int port) {
 */
 
 void Server::sock_listen(int port) {
-  this->port = port;
+	this->port = port;
 
-  this->bind_port(this->port);
+	this->bind_port(this->port);
 
-  if (listen(this->_socket_fd, MAX_CONNECTIONS) < 0) {
-    perror("Could not set the socket in a listen mode");
-    exit(1);
-  }
+	if (listen(this->_socket_fd, MAX_CONNECTIONS) == -1) {
+		perror("Could not set the socket in a listen mode");
+		exit(1);
+	}
 }
 
 void Server::sock_listen() {
-  this->bind_port(this->port);
+	this->bind_port(this->port);
 
-  if (listen(this->_socket_fd, MAX_CONNECTIONS) < 0) {
-    perror("Could not set the socket in a listen mode");
-    exit(1);
-  }
+	if (listen(this->_socket_fd, MAX_CONNECTIONS) == -1) {
+	    perror("Could not set the socket in a listen mode");
+	    exit(1);
+	}
 }
 
 void Server::new_connection() {
-  if ((this->_actual_socket = accept(this->_socket_fd, (struct sockaddr*)&address, (socklen_t*)&this->addrlen)) < 0) {
-      perror("Could not accept new connection");
-      exit(1);
+    
+    while(1) {
+        size_t client_length = sizeof(struct sockaddr_in);
+
+        if ((this->_actual_socket = accept(this->_socket_fd, (struct sockaddr*)&this->client_address, (socklen_t*)&client_length)) < 0) {
+		    perror("Could not accept new connection");
+		    exit(1);
+	    }
+        
+        int valread = read(this->_actual_socket, this->_buffer, 1024);
+        puts(this->_buffer);	
+	    send(this->_actual_socket, message, strlen(message), 0);
+	    puts("Hello message sent\n");
+        
     }
+    close(this->_actual_socket);
+    close(this->_socket_fd);
 }
