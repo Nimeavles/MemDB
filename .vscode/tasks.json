@@ -8,16 +8,13 @@
         "-fdiagnostics-color=always",
         "-g",
         "${file}",
-        "socket_server.cpp",
         "-o",
-        "${fileDirname}/../out/${fileBasenameNoExtension}.o"
+        "${fileDirname}/${fileBasenameNoExtension}"
       ],
       "options": {
         "cwd": "${fileDirname}"
       },
-      "problemMatcher": [
-        "$gcc"
-      ],
+      "problemMatcher": ["$gcc"],
       "group": {
         "kind": "build",
         "isDefault": true

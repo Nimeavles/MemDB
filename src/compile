@@ -1,3 +1,0 @@
-#!bin/bash
-
-g++ -fdiagnostics-color=always -g socket_server.cpp main.cpp -o ../out/main.o

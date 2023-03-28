@@ -1,0 +1,3 @@
+#!bin/bash
+
+g++ -fdiagnostics-color=always -g src/parallel_server.cpp src/main_pa.cpp -o ./out/main.o
