@@ -1,8 +1,8 @@
 COMPILER = g++
 CFlags = -fdiagnostics-color=always -g
 
-memdb.o: server.o main.o
-	$(COMPILER) $(CFlags) server.o main.o -o memdb.o	
+memdb.out: server.o main.o
+	$(COMPILER) $(CFlags) server.o main.o -o memdb.out	
 
 server.o: src/server.cpp
 	$(COMPILER) $(CFlags) -c src/server.cpp

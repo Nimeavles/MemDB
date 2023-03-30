@@ -9,7 +9,7 @@
   make
 
   #Exec the program
-  ./memdb
+  ./memdb.out
 
   #New Terminal and connect a client
   netcat localhost 8080
