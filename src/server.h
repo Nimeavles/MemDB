@@ -1,23 +1,35 @@
 #pragma once
 #include <string>
 #include <netinet/in.h>
-#define MAX_CONNECTIONS 10
+#include <sys/epoll.h>
+
+#define MAX_CONNECTIONS 4
+#define PORT 8080
 
 class Server {
     public:
-        int port = 3000;
-        void create_socket();
-        void avoid_ports_collision();
-        void sock_listen(int port);
-        void sock_listen();
-        void new_connection();
+        int port = PORT;
+        void setup_server();
+        void handle_connections();
     private:
-        int _socket_fd;
-        int opt = 1;
-        struct sockaddr_in server_address;
-        struct sockaddr_in client_address;
-        void bind_port(int port);
-        int _actual_socket;
-        int addrlen = sizeof(sockaddr);
-        char _buffer[1024] = { 0 };
+        //Server
+        int _server_fd;
+        int _opt = 1;
+        struct sockaddr_in _server_address;
+
+        //Client
+        struct sockaddr_in _client_address;
+        int _client;
+        socklen_t _socklen = sizeof(sockaddr);
+        char _client_ip[INET_ADDRSTRLEN];
+        uint16_t _client_port;
+        void _get_client_info(int fd);
+
+        //Epoll
+        int _epoll_fd;
+        struct epoll_event _event, _events[MAX_CONNECTIONS];
+        void _delete_connection(int fd);
+
+        //Read from client
+        void _read_from_client(int fd, size_t bytes_to_read);
 };
