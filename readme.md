@@ -15,7 +15,7 @@
   netcat localhost 8080
 ```
 
-## How it is being coded?
+## How has it being coded?
 
 This project **is not** a development one. I mean, it has been made just for learning a bit more about how does sockets works, and how does the kernel handle multiples connections to the same "server".
 
