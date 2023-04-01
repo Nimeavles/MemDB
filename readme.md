@@ -5,17 +5,20 @@
 ## Run the code
 
 ```sh
-  #Compile the code into memdb.o
-  make
+  #Setup meson
+  meson setup build/
+
+  #Compile the code into
+  ninja -C build/
 
   #Exec the program
-  ./memdb.out
+  ./build/memdb
 
   #New Terminal and connect a client
   netcat localhost 8080
 ```
 
-## How has it being coded?
+## How has it been coded?
 
 This project **is not** a development one. I mean, it has been made just for learning a bit more about how does sockets works, and how does the kernel handle multiples connections to the same "server".
 
