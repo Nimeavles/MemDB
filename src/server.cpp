@@ -8,20 +8,20 @@ using namespace std;
 
 string server_message = u8"Hello World from server\n";
 
-void close_fd(int *socket_fd) {
-  if (close(*socket_fd) < 0) {
+void close_fd(int socket_fd) {
+  if (close(socket_fd) < 0) {
     fprintf(stderr, "\033[31mCouldn't close the server fd\033[0m\n");
     exit(EXIT_FAILURE);
   }
 }
 
-void close_fd(int *socket_fd, int *epoll_fd) {
-  if (close(*socket_fd) < 0) {
+void close_fd(int socket_fd, int epoll_fd) {
+  if (close(socket_fd) < 0) {
     fprintf(stderr, "\033[31mCouldn't close the server fd\033[0m\n");
     exit(EXIT_FAILURE);
   }
 
-  if (close(*epoll_fd) < 0) {
+  if (close(epoll_fd) < 0) {
     fprintf(stderr, "\033[31mCouldn't close the epoll fd\033[0m\n");
     exit(EXIT_FAILURE);
   }
@@ -46,7 +46,7 @@ void Server::_read_from_client(int fd, size_t bytes_to_read) {
     close(fd);      
   }else if (data_read < 0) {
     cerr << "\033[31mCouldn't get data from the client\033[0m" << endl;
-    close_fd(&this->_server_fd, &this->_epoll_fd); 
+    close_fd(this->_server_fd, this->_epoll_fd); 
   }else {
     cout << "\033[33m[" << this->_client_ip << ":" << this->_client_port <<"]\033[0m\033[34m => " << buff_read << "\033[0m";
     send(fd, server_message.c_str() ,server_message.size(), 1024);
@@ -54,18 +54,18 @@ void Server::_read_from_client(int fd, size_t bytes_to_read) {
 }
 
 void Server::_delete_connection(int fd) {
-  if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_DEL, fd, NULL) < 0) {
-    cerr << "\033[31mCouldn't delete the connection\033[0m" << endl;
-    exit(EXIT_FAILURE);
-  }
+  epoll_ctl(this->_epoll_fd, EPOLL_CTL_DEL, fd, NULL); 
 }
 
 void Server::setup_server() {
+  static constexpr int opt = 1;
+
   this->_server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-  if (setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEADDR, &this->_opt, sizeof(this->_opt))) {
+  if (setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) 
+    || setsockopt(this->_server_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) ) {
     fprintf(stderr, "\033[31mCouldn't setsockopt\033[0m\n");
-    close_fd(&this->_server_fd);
+    close_fd(this->_server_fd);
   }
 
 	this->_server_address.sin_family = AF_INET;
@@ -74,12 +74,12 @@ void Server::setup_server() {
 
   if (bind(this->_server_fd, (struct sockaddr *)&this->_server_address, sizeof(this->_server_address)) < 0) {
     fprintf(stderr, "\033[31mCouldn't bind the socket to the port\033[0m\n");
-    close_fd(&this->_server_fd);
+    close_fd(this->_server_fd);
   }
 
   if (listen(this->_server_fd, MAX_CONNECTIONS) < 0) {
     fprintf(stderr, "\033[31mCouldn't set the socket on listen mode\033[0m\n");
-    close_fd(&this->_server_fd);
+    close_fd(this->_server_fd);
   }
 }
 
@@ -98,13 +98,11 @@ void Server::handle_connections() {
 
   if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, this->_server_fd, &this->_event) < 0) {
     fprintf(stderr, "\033[31mCouldn't add the socket fd to the epoll\033[0m\n");
-    close_fd(&this->_server_fd, &this->_epoll_fd);
+    close_fd(this->_server_fd, this->_epoll_fd);
     exit(EXIT_FAILURE);
   }
 
-  bool RUNNING = true;
-
-  while(RUNNING) {
+  while(true) {
     int event_count = epoll_wait(this->_epoll_fd, this->_events, MAX_CONNECTIONS, 3000);
 
     if (event_count == 0) {
@@ -131,7 +129,7 @@ void Server::handle_connections() {
         if (epoll_ctl(this->_epoll_fd, EPOLL_CTL_ADD, this->_client, &this->_event) < 0) {
           fprintf(stderr, "\033[31mCouldn't add the new client fd to the epoll\033[0m\n");
           close(this->_client);
-          close_fd(&this->_server_fd, &this->_epoll_fd);
+          close_fd(this->_server_fd, this->_epoll_fd);
           exit(EXIT_FAILURE);
         }
         continue;

@@ -5,6 +5,7 @@
 
 #define MAX_CONNECTIONS 4
 #define PORT 8080
+#define OPT 1
 
 class Server {
     public:
@@ -14,7 +15,6 @@ class Server {
     private:
         //Server
         int _server_fd;
-        int _opt = 1;
         struct sockaddr_in _server_address;
 
         //Client
