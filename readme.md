@@ -18,6 +18,17 @@
   netcat localhost 8080
 ```
 
+## Use the DB
+
+```sh
+  #After connecting
+  SET CAR "FERRARI 🚗"
+
+  GET CAR
+
+  DELETE CAR
+```
+
 ## How has it been coded?
 
 This project **is not** a development one. I mean, it has been made just for learning a bit more about how does sockets works, and how does the kernel handle multiples connections to the same "server".
