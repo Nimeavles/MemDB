@@ -6,8 +6,6 @@
 
 using namespace std;
 
-string server_message = u8"Hello World from server\n";
-
 void close_fd(int socket_fd) {
   if (close(socket_fd) < 0) {
     fprintf(stderr, "\033[31mCouldn't close the server fd\033[0m\n");
@@ -35,15 +33,17 @@ void Server::_read_from_client(int fd, size_t bytes_to_read) {
   string buff_read(buff, data_read);
 
   if (data_read == 0) {
-    cout << "\033[31m[" << this->_client_info.ip << ":" << this->_client_info.port << "] => " << "HAS CLOSED THE CONNETION\033[0m" << endl;
+    cout << "\033[31m" << this->_client_info.ip << ":" << this->_client_info.port << " has closed the connection\033[0m" << endl;
     this->_delete_connection(fd);
     close(fd);      
   }else if (data_read < 0) {
     cerr << "\033[31mCouldn't get data from the client\033[0m" << endl;
     close_fd(this->_server_fd, this->_epoll_fd); 
   }else {
-    cout << "\033[33m[" << this->_client_info.ip << ":" << this->_client_info.port <<"]\033[0m\033[34m => " << buff_read << "\033[0m";
-    send(fd, server_message.c_str() ,server_message.size(), 1024);
+    server_response parsed_buff = this->parser.parse(buff_read.c_str());
+    string data_to_client = parsed_buff.status + ": " + parsed_buff.response;
+    
+    send(fd, data_to_client.c_str(), data_to_client.size(), 1024);
   }
 }
 
@@ -96,6 +96,8 @@ void Server::handle_connections() {
     exit(EXIT_FAILURE);
   }
 
+  cout << "Listening for connections on port " << PORT << endl;
+
   while(true) {
     int event_count = epoll_wait(this->_epoll_fd, this->_events, MAX_CONNECTIONS, 3000);
 
@@ -116,7 +118,7 @@ void Server::handle_connections() {
 
         this->_client_info = this->_client_info.from_fd(this->_client);
         
-        printf("\033[32mNEW CONNECTION FROM %s:%d\033[0m\n", this->_client_info.ip, this->_client_info.port);
+        printf("\033[32m - New connection from %s:%d\033[0m\n", this->_client_info.ip, this->_client_info.port);
          
         this->_event.data.fd = this->_client;
         this->_event.events = EPOLLIN;

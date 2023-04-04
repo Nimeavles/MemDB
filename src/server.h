@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include "client.h"
+#include "parser.h"
 
 #define MAX_CONNECTIONS 4
 #define PORT 8080
@@ -29,4 +30,7 @@ class Server {
 
         //Read from client
         void _read_from_client(int fd, size_t bytes_to_read);
+
+        //Parser
+        Parser parser;
 };
